@@ -94,7 +94,9 @@ public:
 
     int getSize() const { return m_size; }
 
-    void showMatrix() { for (auto i : m_matrix) { std::cout << std::endl; for (auto j : i) std::cout << j << " "; } }
+    void showMatrix() { for (auto i : m_matrix) { std::cout << std::endl; for (auto j : i) std::cout << j << " "; } std::cout << std::endl; }
+
+    void showInitial() { for (auto i : m_initial) { std::cout << std::endl; for (auto j : i) std::cout << j << " "; } std::cout << std::endl; }
 
     bool readFromFile(const std::string& filename)
     {
@@ -131,6 +133,31 @@ public:
 
     bool readInitial(const std::string& filename, int num = 1)
     {
+        std::ifstream ifs(filename);
+
+        if (!ifs.is_open())
+            return false;
+
+        while(ifs.good())
+        {
+            m_initial.push_back(std::vector<double>());
+            for (size_t i = 0; i < m_size; i++)
+            {
+                double tmp;
+                ifs >> tmp;
+
+                if (!ifs.good())
+                {
+                    m_initial.pop_back();
+                    if (m_initial.empty())
+                        return false;
+                    else
+                        return true;
+                }
+
+                m_initial.back().push_back(tmp);
+            }
+        }
 
         return true;
     }
@@ -149,6 +176,7 @@ private:
     double m_record;
 
     std::vector<std::vector<double> > m_matrix;//for EXPLICIT
+    std::vector<std::vector<double> > m_initial;
     std::vector<double> m_path;
 
     //parsing
@@ -250,13 +278,19 @@ int main(int argc, char** argv)
 {
     Tsp a;
 
-    a.readFromFile("../task/br17.atsp");
+    if (!a.readFromFile("../task/br17.atsp"))
+        std::cout << "Task read failed!" << std::endl;
+
+    if (!a.readInitial("../initial/1_br17.atsp.txt"))
+        std::cout << "Initail failed!" << std::endl;
 
     std::cout << "Name: " << a.getName() << std::endl;
     std::cout << "Description: " << a.getDescription() << std::endl;
     std::cout << "Size: " << a.getSize() << std::endl;
-    std::cout << "Matrix: " << std::endl;
+    std::cout << "Matrix: ";
     a.showMatrix();
+    std::cout << "Initial: ";
+    a.showInitial();
 
 
     return 0;
