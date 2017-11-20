@@ -350,7 +350,7 @@ private:
         {
             for (size_t j = 0; j < m_size; j++)
             {
-                if (j - i > 0)
+                if (i != j)
                 {
                     auto tmp = m_path;
                     std::swap(tmp[i], tmp[j]);
@@ -371,21 +371,20 @@ int main(int argc, char** argv)
 {
     Tsp a;
 
-    if (!a.readFromFile("../task/bays29.tsp"))
+    if (!a.readFromFile(argv[1]))
         std::cout << "Task read failed!" << std::endl;
 
-    if (!a.readInitial("../initial/2_bays29.tsp.txt"))
+    if (!a.readInitial(argv[2]))
         std::cout << "Initail failed!" << std::endl;
 
     std::cout << "Name: " << a.getName() << std::endl;
     std::cout << "Description: " << a.getDescription() << std::endl;
     std::cout << "Size: " << a.getSize() << std::endl;
-    std::cout << "Matrix: ";
-    a.showMatrix();
+//    std::cout << "Matrix: ";
+//    a.showMatrix();
 //    std::cout << "Initial: ";
 //    a.showInitial();
     a.solve();
-
 
     return 0;
 }
