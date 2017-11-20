@@ -162,6 +162,36 @@ public:
         return true;
     }
 
+    void solve()
+    {
+        for (size_t j = 0; j < m_initial.size(); j++)
+        {
+            bool isThereBetter = true;
+            m_record = 999999;
+            m_path = m_initial[j];
+
+            std::cout << "New initial:" << std::endl;
+
+            while (isThereBetter)
+            {
+                auto neighbors = getNeighbors();
+
+                isThereBetter = false;
+                for (size_t i = 0; i < neighbors.size(); i++)
+                {
+                    double lenght = 999999;
+                    if ((lenght = getLenght(neighbors[i])) < m_record)
+                    {
+                        m_record = lenght;
+                        m_path = neighbors[i];
+                        isThereBetter = true;
+                        std::cout << "New record: " << m_record << std::endl;
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
 private:
     std::string m_name;
@@ -270,6 +300,42 @@ private:
     {
         return sqrt((b.first - a.first) * (b.first - a.first) + (b.second - a.second) * (b.second - a.second));
     }
+
+
+    //solution
+    double getLenght(const std::vector<double>& path)
+    {
+        double result = 0;
+
+        for (size_t i = 0; i < m_size; i++)
+            result += m_matrix[path[i]][path[i + 1]];
+
+        result += m_matrix[path[m_size - 1]][path[0]];
+
+        return result;
+    }
+
+    std::vector<std::vector<double> > getNeighbors()
+    {
+        std::vector<std::vector<double> > result;
+
+        for (size_t i = 0; i < m_size; i++)
+        {
+            for (size_t j = 0; j < m_size; j++)
+            {
+                if (j - i > 0)
+                {
+                    auto tmp = m_path;
+                    std::swap(tmp[i], tmp[j]);
+                    result.push_back(tmp);
+                }
+            }
+        }
+
+        //for (auto i : result) { std::cout << std::endl; for (auto j : i) std::cout << j << " "; std::cout << " " << getLenght(i); } std::cout << std::endl;
+
+        return result;
+    }
 };
 
 
@@ -291,6 +357,7 @@ int main(int argc, char** argv)
     a.showMatrix();
     std::cout << "Initial: ";
     a.showInitial();
+    a.solve();
 
 
     return 0;
