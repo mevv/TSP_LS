@@ -5,10 +5,12 @@
 #include <sstream>
 #include <cmath>
 
+const double INF = 999999;
 
-enum TYPE { TSP, ATSP };
-enum EDGE_WEIGHT_TYPE { EXPLICIT, EUC_2D, ATT };
-enum EDGE_WEIGHT_FORMAT { FULL_MATRIX };
+enum class TYPE { NONE = -1, TSP, ATSP };
+enum class EDGE_WEIGHT_TYPE { NONE = -1, EXPLICIT, EUC_2D, ATT };
+enum class EDGE_WEIGHT_FORMAT { NONE = -1, FULL_MATRIX };
+enum class SECTION { NONE = -1, EDGE_WEIGHT_SECTION, NODE_COORD_SECTION };
 
 TYPE str2type(const std::string& str)
 {
@@ -16,6 +18,8 @@ TYPE str2type(const std::string& str)
         return TYPE::TSP;
     else if (str == "ATSP")
         return TYPE::ATSP;
+    else
+        return TYPE::NONE;
 }
 
 EDGE_WEIGHT_TYPE str2edgeWeightType(const std::string& str)
@@ -26,12 +30,26 @@ EDGE_WEIGHT_TYPE str2edgeWeightType(const std::string& str)
         return EDGE_WEIGHT_TYPE::EUC_2D;
     else if (str == "ATT")
         return EDGE_WEIGHT_TYPE::ATT;
+    else
+        return EDGE_WEIGHT_TYPE::NONE;
 }
 
 EDGE_WEIGHT_FORMAT str2edgeWeightFormat(const std::string& str)
 {
     if (str == "FULL_MATRIX")
         return EDGE_WEIGHT_FORMAT::FULL_MATRIX;
+    else
+        return EDGE_WEIGHT_FORMAT::NONE;
+}
+
+SECTION str2section(const std::string& str)
+{
+    if (str == "EDGE_WEIGHT_SECTION")
+        return SECTION::EDGE_WEIGHT_SECTION;
+    else if (str == "NODE_COORD_SECTION")
+        return SECTION::NODE_COORD_SECTION;
+    else
+        return SECTION::NONE;
 }
 
 int str2int(const std::string & str)
@@ -123,9 +141,16 @@ public:
             else if (parseParam(tmp, "EDGE_WEIGHT_TYPE", val))
                 m_edgeWeightFormat = str2edgeWeightFormat(val);
 
+            if (isEOF(tmp))
+                break;
+
             if (isSection(tmp))
-                if (!parseSection(ifs, tmp))
-                    return false;
+            {
+                if (str2section(tmp) == SECTION::EDGE_WEIGHT_SECTION)
+                    readMatrix(ifs);
+                else if (str2section(tmp) == SECTION::NODE_COORD_SECTION)
+                    readNodeCoord(ifs);
+            }
         }
 
         return true;
@@ -167,10 +192,13 @@ public:
         for (size_t j = 0; j < m_initial.size(); j++)
         {
             bool isThereBetter = true;
-            m_record = 999999;
+            m_record = INF;
             m_path = m_initial[j];
 
-            std::cout << "New initial:" << std::endl;
+            std::cout << "Initial lenght: " << getLenght(m_path) << std::endl;
+            std::cout << "Initial: ";
+            for (auto i : m_path) std::cout << i << " ";
+            std::cout << std::endl;
 
             while (isThereBetter)
             {
@@ -179,17 +207,23 @@ public:
                 isThereBetter = false;
                 for (size_t i = 0; i < neighbors.size(); i++)
                 {
-                    double lenght = 999999;
+                    double lenght = INF;
                     if ((lenght = getLenght(neighbors[i])) < m_record)
                     {
                         m_record = lenght;
                         m_path = neighbors[i];
                         isThereBetter = true;
-                        std::cout << "New record: " << m_record << std::endl;
+                        //std::cout << "New record: " << m_record << std::endl;
                         break;
                     }
                 }
             }
+
+            std::cout << "Record lenght: " << m_record << std::endl;
+            std::cout << "Path: ";
+            for (auto i : m_path) std::cout << i << " ";
+            std::cout << std::endl;
+            std::cout << std::endl;
         }
     }
 
@@ -205,34 +239,27 @@ private:
 
     double m_record;
 
-    std::vector<std::vector<double> > m_matrix;//for EXPLICIT
+    std::vector<std::vector<double> > m_matrix;
     std::vector<std::vector<double> > m_initial;
     std::vector<double> m_path;
 
     //parsing
     bool isSection(const std::string& str)
     {
+        return str2section(str) != SECTION::NONE;
+    }
+
+    bool isEOF(const std::string& str)
+    {
         if (str == "EOF")
-            return true;
-        else if (str == "EDGE_WEIGHT_SECTION")
-            return true;
-        else if (str == "NODE_COORD_SECTION")
             return true;
 
         return false;
     }
 
-    bool parseSection(std::ifstream& ifs, const std::string& str)
+    bool parseSection(const std::string& str)
     {
-        if (str == "EOF")
-            return true;
-
-        if (str == "EDGE_WEIGHT_SECTION")
-            return readMatrix(ifs);
-        else if (str == "NODE_COORD_SECTION")
-            return readNodeCoord(ifs);
-
-        return false;
+        return str2section(str) != SECTION::NONE;
     }
 
     bool parseParam(const std::string& str, const std::string& name, std::string& result)
@@ -307,7 +334,7 @@ private:
     {
         double result = 0;
 
-        for (size_t i = 0; i < m_size; i++)
+        for (size_t i = 0; i < m_size - 1; i++)
             result += m_matrix[path[i]][path[i + 1]];
 
         result += m_matrix[path[m_size - 1]][path[0]];
@@ -344,10 +371,10 @@ int main(int argc, char** argv)
 {
     Tsp a;
 
-    if (!a.readFromFile("../task/br17.atsp"))
+    if (!a.readFromFile("../task/bays29.tsp"))
         std::cout << "Task read failed!" << std::endl;
 
-    if (!a.readInitial("../initial/1_br17.atsp.txt"))
+    if (!a.readInitial("../initial/2_bays29.tsp.txt"))
         std::cout << "Initail failed!" << std::endl;
 
     std::cout << "Name: " << a.getName() << std::endl;
@@ -355,8 +382,8 @@ int main(int argc, char** argv)
     std::cout << "Size: " << a.getSize() << std::endl;
     std::cout << "Matrix: ";
     a.showMatrix();
-    std::cout << "Initial: ";
-    a.showInitial();
+//    std::cout << "Initial: ";
+//    a.showInitial();
     a.solve();
 
 
