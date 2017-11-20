@@ -288,6 +288,9 @@ private:
                 double tmp;
                 ifs >> tmp;
 
+                if (!ifs)
+                    return false;
+
                 m_matrix.back().push_back(tmp);
             }
         }
@@ -370,6 +373,8 @@ private:
 int main(int argc, char** argv)
 {
     Tsp a;
+
+    //std::cout << argv[1] << " " << argv[2] << std::endl;
 
     if (!a.readFromFile(argv[1]))
         std::cout << "Task read failed!" << std::endl;
