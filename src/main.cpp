@@ -52,6 +52,8 @@ SECTION str2section(const std::string& str)
         return SECTION::NONE;
 }
 
+namespace {
+
 int str2int(const std::string & str)
 {
     int minus = 1;
@@ -75,36 +77,29 @@ int str2int(const std::string & str)
     return x;
 }
 
-//
-//Left trim
-//
-std::string trim_left(const std::string& str)
+std::string ltrim(const std::string& str)
 {
   const std::string pattern = " \f\n\r\t\v";
   return str.substr(str.find_first_not_of(pattern));
 }
 
-//
-//Right trim
-//
-std::string trim_right(const std::string& str)
+std::string rtrim(const std::string& str)
 {
   const std::string pattern = " \f\n\r\t\v";
   return str.substr(0,str.find_last_not_of(pattern) + 1);
 }
 
-//
-//Left and Right trim
-//
 std::string trim(const std::string& str)
 {
-  return trim_left(trim_right(str));
+  return ltrim(rtrim(str));
+}
+
 }
 
 class Tsp
 {
 public:
-    //TSP() {}
+    Tsp() {}
 
     std::string getName() const { return m_name; }
 
@@ -156,7 +151,7 @@ public:
         return true;
     }
 
-    bool readInitial(const std::string& filename, int num = 1)
+    bool readInitial(const std::string& filename)
     {
         std::ifstream ifs(filename);
 
@@ -235,7 +230,7 @@ private:
     EDGE_WEIGHT_TYPE m_edgeWeightType;
     EDGE_WEIGHT_FORMAT m_edgeWeightFormat;
 
-    int m_size;
+    size_t m_size;
 
     double m_record;
 
@@ -374,13 +369,25 @@ int main(int argc, char** argv)
 {
     Tsp a;
 
-    //std::cout << argv[1] << " " << argv[2] << std::endl;
+//    std::cout << argv[1] << " " << argv[2] << std::endl;
+
+    if (argc != 3)
+    {
+       std::cout << "Wrong arguments number:" << argc << std::endl;
+       return -1;
+    }
 
     if (!a.readFromFile(argv[1]))
+    {
         std::cout << "Task read failed!" << std::endl;
+        return -1;
+    }
 
     if (!a.readInitial(argv[2]))
-        std::cout << "Initail failed!" << std::endl;
+    {
+        std::cout << "Initial failed!" << std::endl;
+        return -1;
+    }
 
     std::cout << "Name: " << a.getName() << std::endl;
     std::cout << "Description: " << a.getDescription() << std::endl;
@@ -389,6 +396,7 @@ int main(int argc, char** argv)
 //    a.showMatrix();
 //    std::cout << "Initial: ";
 //    a.showInitial();
+
     a.solve();
 
     return 0;
