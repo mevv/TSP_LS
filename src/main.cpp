@@ -14,7 +14,7 @@ enum class SECTION { NONE = -1, EDGE_WEIGHT_SECTION, NODE_COORD_SECTION };
 
 TYPE str2type(const std::string& str)
 {
-    if (str == "NAME")
+    if (str == "TSP")
         return TYPE::TSP;
     else if (str == "ATSP")
         return TYPE::ATSP;
@@ -123,18 +123,20 @@ public:
         while (getline(ifs, tmp))
         {
             std::string val;
+
             if (parseParam(tmp, "NAME", val))
                 m_name = val;
             else if (parseParam(tmp, "COMMENT", val))
                 m_comment = val;
-            else if (parseParam(tmp, "TYPE", val))
-                m_type = str2type(val);
             else if (parseParam(tmp, "DIMENSION", val))
                 m_size = str2int(val);
             else if (parseParam(tmp, "EDGE_WEIGHT_TYPE", val))
                 m_edgeWeightType = str2edgeWeightType(val);
-            else if (parseParam(tmp, "EDGE_WEIGHT_TYPE", val))
+            else if (parseParam(tmp, "TYPE", val))
+                m_type = str2type(val);
+            else if (parseParam(tmp, "EDGE_WEIGHT_FORMAT", val))
                 m_edgeWeightFormat = str2edgeWeightFormat(val);
+
 
             if (isEOF(tmp))
                 break;
@@ -323,9 +325,14 @@ private:
 
     double dist(const std::pair<double, double>& a, const std::pair<double, double>& b)
     {
+        if (m_edgeWeightType == EDGE_WEIGHT_TYPE::ATT)
+        {
+            double r = sqrt(((b.first - a.first) * (b.first - a.first) + (b.second - a.second) * (b.second - a.second)) / 10.0);
+            return round(r) < r ? round(r) + 1.0 : round(r);
+        }
+
         return sqrt((b.first - a.first) * (b.first - a.first) + (b.second - a.second) * (b.second - a.second));
     }
-
 
     //solution
     double getLenght(const std::vector<double>& path)
