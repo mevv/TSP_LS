@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <cmath>
+#include <chrono>
 
 const double INF = 999999;
 
@@ -184,11 +185,16 @@ public:
         return true;
     }
 
-    void solve()
+    // Local Search
+    void LS()
     {
         for (size_t j = 0; j < m_initial.size(); j++)
         {
             bool isThereBetter = true;
+            std::chrono::time_point<std::chrono::system_clock> start, end;
+            int time = 0;
+            size_t iterations = 0;
+
             m_record = INF;
             m_path = m_initial[j];
 
@@ -197,8 +203,11 @@ public:
             for (auto i : m_path) std::cout << i << " ";
             std::cout << std::endl;
 
+            start = std::chrono::system_clock::now();
+
             while (isThereBetter)
             {
+                iterations++;
                 auto neighbors = getNeighbors();
 
                 isThereBetter = false;
@@ -216,12 +225,24 @@ public:
                 }
             }
 
+            end = std::chrono::system_clock::now();
+            time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+
+
+            std::cout << "Iterations: " << iterations << std::endl;
+            std::cout << "Elapsed time: " << time << " ms" << std::endl;
             std::cout << "Record lenght: " << m_record << std::endl;
             std::cout << "Path: ";
             for (auto i : m_path) std::cout << i << " ";
             std::cout << std::endl;
             std::cout << std::endl;
         }
+    }
+
+    // Guided Local Search
+    void GLS()
+    {
+
     }
 
 private:
@@ -404,7 +425,7 @@ int main(int argc, char** argv)
 //    std::cout << "Initial: ";
 //    a.showInitial();
 
-    a.solve();
+    a.LS();
 
     return 0;
 }
