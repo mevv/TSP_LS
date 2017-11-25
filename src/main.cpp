@@ -12,6 +12,7 @@ enum class TYPE { NONE = -1, TSP, ATSP };
 enum class EDGE_WEIGHT_TYPE { NONE = -1, EXPLICIT, EUC_2D, ATT };
 enum class EDGE_WEIGHT_FORMAT { NONE = -1, FULL_MATRIX };
 enum class SECTION { NONE = -1, EDGE_WEIGHT_SECTION, NODE_COORD_SECTION };
+enum class ALGO { LS, GLS };
 
 TYPE str2type(const std::string& str)
 {
@@ -52,6 +53,7 @@ SECTION str2section(const std::string& str)
     else
         return SECTION::NONE;
 }
+
 
 namespace {
 
@@ -96,6 +98,7 @@ std::string trim(const std::string& str)
 }
 
 }
+
 
 class Tsp
 {
@@ -188,54 +191,32 @@ public:
     // Local Search
     void LS()
     {
-        for (size_t j = 0; j < m_initial.size(); j++)
+        bool isThereBetter = true;
+
+        m_iterations = 0;
+        m_record = INF;
+
+        if (m_path.size() != m_size)
+            return ;
+
+        while (isThereBetter)
         {
-            bool isThereBetter = true;
-            std::chrono::time_point<std::chrono::system_clock> start, end;
-            int time = 0;
-            size_t iterations = 0;
+            m_iterations++;
+            auto neighbors = getNeighbors();
 
-            m_record = INF;
-            m_path = m_initial[j];
-
-            std::cout << "Initial lenght: " << getLenght(m_path) << std::endl;
-            std::cout << "Initial: ";
-            for (auto i : m_path) std::cout << i << " ";
-            std::cout << std::endl;
-
-            start = std::chrono::system_clock::now();
-
-            while (isThereBetter)
+            isThereBetter = false;
+            for (size_t i = 0; i < neighbors.size(); i++)
             {
-                iterations++;
-                auto neighbors = getNeighbors();
-
-                isThereBetter = false;
-                for (size_t i = 0; i < neighbors.size(); i++)
+                double lenght = INF;
+                if ((lenght = getLenght(neighbors[i])) < m_record)
                 {
-                    double lenght = INF;
-                    if ((lenght = getLenght(neighbors[i])) < m_record)
-                    {
-                        m_record = lenght;
-                        m_path = neighbors[i];
-                        isThereBetter = true;
-                        //std::cout << "New record: " << m_record << std::endl;
-                        break;
-                    }
+                    m_record = lenght;
+                    m_path = neighbors[i];
+                    isThereBetter = true;
+                    //std::cout << "New record: " << m_record << std::endl;
+                    break;
                 }
             }
-
-            end = std::chrono::system_clock::now();
-            time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-
-
-            std::cout << "Iterations: " << iterations << std::endl;
-            std::cout << "Elapsed time: " << time << " ms" << std::endl;
-            std::cout << "Record lenght: " << m_record << std::endl;
-            std::cout << "Path: ";
-            for (auto i : m_path) std::cout << i << " ";
-            std::cout << std::endl;
-            std::cout << std::endl;
         }
     }
 
@@ -243,6 +224,50 @@ public:
     void GLS()
     {
 
+    }
+
+    void solve(ALGO algo = ALGO::LS, bool verbose = true)
+    {
+        for (size_t j = 0; j < m_initial.size(); j++)
+        {
+            std::chrono::time_point<std::chrono::system_clock> start, end;
+            int time = 0;
+
+            m_path = m_initial[j];
+
+            if (verbose)
+            {
+                std::cout << "Initial lenght: " << getLenght(m_path) << std::endl;
+                std::cout << "Initial: ";
+                for (auto i : m_path) std::cout << i << " ";
+                std::cout << std::endl;
+            }
+
+            start = std::chrono::system_clock::now();
+
+            if (algo == ALGO::LS)
+                LS();
+            else if (algo == ALGO::GLS)
+                GLS();
+            else
+            {
+                std::cout << "Wrong algorithm: " << (int)algo << std::endl;
+                return ;
+            }
+
+            end = std::chrono::system_clock::now();
+            time = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+
+            if (verbose)
+            {
+                std::cout << "Iterations: " << m_iterations << std::endl;
+                std::cout << "Elapsed time: " << time << " ms" << std::endl;
+                std::cout << "Record lenght: " << m_record << std::endl;
+                std::cout << "Path: ";
+                for (auto i : m_path) std::cout << i << " ";
+                std::cout << std::endl << std::endl;
+            }
+        }
     }
 
 private:
@@ -259,7 +284,11 @@ private:
 
     std::vector<std::vector<double> > m_matrix;
     std::vector<std::vector<double> > m_initial;
+    std::vector<std::vector<double> > m_penalties;
     std::vector<double> m_path;
+
+    size_t m_iterations;
+
 
     //parsing
     bool isSection(const std::string& str)
@@ -425,7 +454,7 @@ int main(int argc, char** argv)
 //    std::cout << "Initial: ";
 //    a.showInitial();
 
-    a.LS();
+    a.solve();
 
     return 0;
 }
