@@ -1,5 +1,7 @@
 # TSP_LS
-Simply local search algorithm for TSP. Task samples from http://softlib.rice.edu/pub/tsplib/
+Implementation of simple Local Search (LS) and Guided Local Search (GLS) algorithms for Travelling Salesman Problem (TSP).
+
+Task samples from http://softlib.rice.edu/pub/tsplib/
 
 # Build
 <br>mkdir build/
@@ -8,7 +10,8 @@ Simply local search algorithm for TSP. Task samples from http://softlib.rice.edu
 <br>make
 
 # Run
-build/tsp <task_file> <initial_solution_file>
+Single task:
+<br>build/tsp <task_file> <initial_solution_file>
 
 All tasks:
 <br>./run_tasks.sh
