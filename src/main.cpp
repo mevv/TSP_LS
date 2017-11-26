@@ -7,6 +7,7 @@
 #include <chrono>
 
 const double INF = 999999;
+const size_t MAX_GFS_ITER = 100;
 
 enum class TYPE { NONE = -1, TSP, ATSP };
 enum class EDGE_WEIGHT_TYPE { NONE = -1, EXPLICIT, EUC_2D, ATT };
@@ -154,6 +155,9 @@ public:
             }
         }
 
+        for (size_t i = 0; i < m_size; i++)
+            m_penalties.push_back(std::vector<double>(m_size));
+
         return true;
     }
 
@@ -189,7 +193,7 @@ public:
     }
 
     // Local Search
-    void LS()
+    void LS(bool penalable = false)
     {
         bool isThereBetter = true;
 
@@ -208,7 +212,7 @@ public:
             for (size_t i = 0; i < neighbors.size(); i++)
             {
                 double lenght = INF;
-                if ((lenght = getLenght(neighbors[i])) < m_record)
+                if ((lenght = getLenght(neighbors[i]) + (penalable ? getPenalty(neighbors[i]) : 0)) < m_record)
                 {
                     m_record = lenght;
                     m_path = neighbors[i];
@@ -223,7 +227,36 @@ public:
     // Guided Local Search
     void GLS()
     {
+        for (auto& i : m_penalties)
+            for (auto& j : i)
+                j = 0;
 
+        LS();
+
+        auto initial = m_path;
+        auto best = m_path;
+        double bestLenght = getLenght(m_path);
+
+        size_t iterations = 0;
+        while (iterations < MAX_GFS_ITER)
+        {
+            m_path = initial;
+            penalize();
+            LS(true);
+
+            iterations++;
+
+            if (getLenght(m_path) < bestLenght)
+            {
+                best = m_path;
+                bestLenght = getLenght(m_path);
+                break;
+            }
+        }
+
+        m_iterations = iterations;
+        m_path = best;
+        m_record = bestLenght;
     }
 
     void solve(ALGO algo = ALGO::LS, bool verbose = true)
@@ -384,7 +417,8 @@ private:
         return sqrt((b.first - a.first) * (b.first - a.first) + (b.second - a.second) * (b.second - a.second));
     }
 
-    //solution
+
+    //solving
     double getLenght(const std::vector<double>& path)
     {
         double result = 0;
@@ -395,6 +429,28 @@ private:
         result += m_matrix[path[m_size - 1]][path[0]];
 
         return result;
+    }
+
+    double getPenalty(const std::vector<double>& path)
+    {
+        double result = 0;
+
+        for (size_t i = 0; i < m_size - 1; i++)
+            result += m_penalties[path[i]][path[i + 1]];
+
+        result += m_penalties[path[m_size - 1]][path[0]];
+
+        return result;
+    }
+
+    void penalize()
+    {
+        double lenght = getLenght(m_path);
+
+        for (size_t i = 0; i < m_size - 1; i++)
+            m_penalties[i][i + 1] = lenght / (1 + m_penalties[i][i + 1]);
+
+        m_penalties[m_size - 1][0] = lenght / (1 + m_penalties[m_size - 1][0]);
     }
 
     std::vector<std::vector<double> > getNeighbors()
@@ -454,7 +510,10 @@ int main(int argc, char** argv)
 //    std::cout << "Initial: ";
 //    a.showInitial();
 
-    a.solve();
+    std::cout << ">>>>>>>>>>ALGO: LS<<<<<<<<<<" << std::endl;
+    a.solve(ALGO::GLS, true);
+    std::cout << ">>>>>>>>>>ALGO: GLS<<<<<<<<<<" << std::endl;;
+    a.solve(ALGO::GLS, true);
 
     return 0;
 }
