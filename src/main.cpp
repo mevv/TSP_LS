@@ -8,6 +8,7 @@
 
 const double INF = 999999;
 const size_t MAX_GFS_ITER = 100;
+const double PENALTY_LAMBDA = 100;
 
 enum class TYPE { NONE = -1, TSP, ATSP };
 enum class EDGE_WEIGHT_TYPE { NONE = -1, EXPLICIT, EUC_2D, ATT };
@@ -440,17 +441,26 @@ private:
 
         result += m_penalties[path[m_size - 1]][path[0]];
 
-        return result;
+        return result * PENALTY_LAMBDA;
     }
 
     void penalize()
     {
         double lenght = getLenght(m_path);
 
-        for (size_t i = 0; i < m_size - 1; i++)
-            m_penalties[i][i + 1] = lenght / (1 + m_penalties[i][i + 1]);
+        double maxUtility = 0;
+        size_t index = 0;
 
-        m_penalties[m_size - 1][0] = lenght / (1 + m_penalties[m_size - 1][0]);
+        for (size_t i = 0; i < m_size; i++)
+        {
+            if (lenght / (1 + m_penalties[i][i != m_size - 1 ? i + 1 : 0]) > maxUtility)
+            {
+                maxUtility = lenght / (1 + m_penalties[i][i != m_size - 1 ? i + 1 : 0]);
+                index = i;
+            }
+        }
+
+        m_penalties[index][index != m_size - 1 ? index + 1 : 0]++;
     }
 
     std::vector<std::vector<double> > getNeighbors()
@@ -511,7 +521,7 @@ int main(int argc, char** argv)
 //    a.showInitial();
 
     std::cout << ">>>>>>>>>>ALGO: LS<<<<<<<<<<" << std::endl;
-    a.solve(ALGO::GLS, true);
+    a.solve(ALGO::LS, true);
     std::cout << ">>>>>>>>>>ALGO: GLS<<<<<<<<<<" << std::endl;;
     a.solve(ALGO::GLS, true);
 
